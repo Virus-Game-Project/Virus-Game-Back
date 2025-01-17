@@ -15,6 +15,9 @@ const port = process.env.PORT;
 app.use(cors());
 app.use(express.json());
 
+const UserRoutes = require("./routes/UserRoutes");
+app.use("/api/users", UserRoutes);
+
 app.get("/test-route", (_req, res) => {
     return res.status(200).json({
         "version": "0.0.0"
