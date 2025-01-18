@@ -2,6 +2,7 @@ const Room = require("../models/RoomModel");
 
 const create = async (req, res) => {
     let roomBody = req.body;
+    let userId = req.user.id;
 
     if (!roomBody.code) {
         return res.status(400).json({
@@ -10,7 +11,8 @@ const create = async (req, res) => {
     }
 
     let roomData = {
-        code: roomBody.code
+        code: roomBody.code,
+        admin: userId
     }
 
     try {
@@ -34,7 +36,7 @@ const create = async (req, res) => {
             }
 
             return res.status(200).json({
-                ":_id": roomStored._id
+                "room": roomStored
             });
 
         } catch {
@@ -69,7 +71,28 @@ const getByCode = (req, res) => {
     });
 }
 
+const getById = (req, res) => {
+    let roomId = req.query.id;
+
+    Room.findById(roomId).then(room => {
+        if (!room) {
+            return res.status(404).json({
+                "message": "No existe sala con ese código"
+            });
+        }
+
+        return res.status(200).json({
+            room
+        });
+    }).catch(() => {
+        return res.status(404).json({
+            "message": "Error while finding room"
+        });
+    });
+}
+
 module.exports = {
     create,
-    getByCode
+    getByCode,
+    getById
 }

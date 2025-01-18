@@ -2,7 +2,10 @@ const express = require("express");
 const router = express.Router();
 const RoomController = require("../controllers/RoomController");
 
-router.post("/create", RoomController.create);
-router.get("/getByCode", RoomController.getByCode);
+const check = require("../authorization/auth");
+
+router.post("/create", check.auth, RoomController.create);
+router.get("/getByCode", check.auth, RoomController.getByCode);
+router.get("/getById", RoomController.getById);
 
 module.exports = router;
