@@ -27,7 +27,9 @@ app.get("/test-route", (_req, res) => {
 });
 
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+    cors: {}
+});
 
 const requests = require('./socket-requests/requests');
 requests(io);
