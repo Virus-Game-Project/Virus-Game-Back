@@ -9,5 +9,6 @@ router.get("/getByCode", check.auth, RoomController.getByCode);
 router.get("/getById", RoomController.getById);
 router.get("/getByIdAndIncPlayers", RoomController.getByIdAndIncPlayers);
 router.get("/getByIdAndDecPlayers", RoomController.getByIdAndDecPlayers);
+router.put("/update", RoomController.update);
 
 module.exports = router;

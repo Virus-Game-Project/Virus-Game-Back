@@ -93,7 +93,7 @@ const getById = (req, res) => {
     });
 }
 
-const getByIdAndIncPlayers = async (req, res) => {
+const getByIdAndIncPlayers = (req, res) => {
     let roomId = req.query.id;
 
     Room.findByIdAndUpdate({ _id: roomId }, { $inc: { playersQuantity: 1 } }, { new: true }).then(room => {
@@ -113,7 +113,7 @@ const getByIdAndIncPlayers = async (req, res) => {
     });
 }
 
-const getByIdAndDecPlayers = async (req, res) => {
+const getByIdAndDecPlayers = (req, res) => {
     let roomId = req.query.id;
 
     Room.findByIdAndUpdate({ _id: roomId }, { $inc: { playersQuantity: -1 } }, { new: true }).then(room => {
@@ -133,10 +133,30 @@ const getByIdAndDecPlayers = async (req, res) => {
     });
 }
 
+const update = (req, res) => {
+    let roomBody = req.body.room;
+
+    Room.findByIdAndUpdate({ _id: roomBody._id }, roomBody, { new: true }).then(roomUpdated => {
+        if (!roomUpdated) {
+            return res.status(404).json({
+                "mensaje": "Room not found"
+            });
+        }
+        return res.status(200).send({
+            "room": roomUpdated
+        });
+    }).catch((e) => {
+        return res.status(404).json({
+            "mensaje": "Error while finding and updating room"
+        });
+    });
+}
+
 module.exports = {
     create,
     getByCode,
     getById,
     getByIdAndIncPlayers,
-    getByIdAndDecPlayers
+    getByIdAndDecPlayers,
+    update
 }
