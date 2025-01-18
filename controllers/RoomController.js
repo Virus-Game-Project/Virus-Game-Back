@@ -95,8 +95,9 @@ const getById = (req, res) => {
 
 const getByIdAndIncPlayers = (req, res) => {
     let roomId = req.query.id;
+    let userId = req.user.id;
 
-    Room.findByIdAndUpdate({ _id: roomId }, { $inc: { playersQuantity: 1 } }, { new: true }).then(room => {
+    Room.findByIdAndUpdate({ _id: roomId }, { $addToSet: { players: userId } }, { new: true }).then(room => {
         if (!room) {
             return res.status(404).json({
                 "message": "No existe sala con ese código"
@@ -115,8 +116,9 @@ const getByIdAndIncPlayers = (req, res) => {
 
 const getByIdAndDecPlayers = (req, res) => {
     let roomId = req.query.id;
+    let userId = req.user.id;
 
-    Room.findByIdAndUpdate({ _id: roomId }, { $inc: { playersQuantity: -1 } }, { new: true }).then(room => {
+    Room.findByIdAndUpdate({ _id: roomId }, { $pull: { players: userId } }, { new: true }).then(room => {
         if (!room) {
             return res.status(404).json({
                 "message": "No existe sala con ese código"

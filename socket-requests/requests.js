@@ -2,22 +2,26 @@ const Room = require("../models/RoomModel");
 
 module.exports = (io) => {
     io.on('connection', (socket) => {
-        let currentRoom = null;
         let currentRoomId = null;
+        let currentUserId = null;
 
-        socket.on('joinRoom', (room) => {
-            currentRoom = room.code;
-            currentRoomId = room.id;
-            socket.join(room.code);
-            socket.to(room.code).emit('updateRoom', '+');
+        socket.on('joinRoom', (roomData) => {
+            currentRoomId = roomData.roomId;
+            currentUserId = roomData.userId;
+            socket.join(roomData.roomId);
+            socket.to(roomData.roomId).emit('updateRoom');
         });
 
         socket.on('disconnect', async () => {
-            if (currentRoom) {
-                await Room.findByIdAndUpdate({ _id: currentRoomId }, { $inc: { playersQuantity: -1 } }, { new: true });
-                socket.leave(currentRoom);
-                socket.to(currentRoom).emit('updateRoom', '-');
+            if (currentRoomId) {
+                await Room.findByIdAndUpdate({ _id: currentRoomId }, { $pull: { players: currentUserId } }, { new: true });
+                socket.leave(currentRoomId);
+                socket.to(currentRoomId).emit('updateRoom');
             }
+        });
+
+        socket.on('gameStarted', () => {
+            socket.to(currentRoomId).emit('updateRoom');
         });
     });
 }

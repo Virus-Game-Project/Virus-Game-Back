@@ -8,10 +8,10 @@ const RoomSchema = Schema({
         type: Schema.ObjectId,
         ref: "User"
     },
-    playersQuantity: {
-        type: Number,
-        default: 0
-    },
+    players: [{
+        type: Schema.ObjectId,
+        ref: "User"
+    }],
     status: {
         type: String,
         default: "waiting"
