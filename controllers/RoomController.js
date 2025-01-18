@@ -77,6 +77,48 @@ const getById = (req, res) => {
     Room.findById(roomId).then(room => {
         if (!room) {
             return res.status(404).json({
+                "status": "error",
+                "message": "No existe sala con ese código"
+            });
+        }
+
+        return res.status(200).json({
+            room
+        });
+    }).catch(() => {
+        return res.status(404).json({
+            "status": "error",
+            "message": "Error while finding room"
+        });
+    });
+}
+
+const getByIdAndIncPlayers = async (req, res) => {
+    let roomId = req.query.id;
+
+    Room.findByIdAndUpdate({ _id: roomId }, { $inc: { playersQuantity: 1 } }, { new: true }).then(room => {
+        if (!room) {
+            return res.status(404).json({
+                "message": "No existe sala con ese código"
+            });
+        }
+
+        return res.status(200).json({
+            room
+        });
+    }).catch(() => {
+        return res.status(404).json({
+            "message": "Error while finding room"
+        });
+    });
+}
+
+const getByIdAndDecPlayers = async (req, res) => {
+    let roomId = req.query.id;
+
+    Room.findByIdAndUpdate({ _id: roomId }, { $inc: { playersQuantity: -1 } }, { new: true }).then(room => {
+        if (!room) {
+            return res.status(404).json({
                 "message": "No existe sala con ese código"
             });
         }
@@ -94,5 +136,7 @@ const getById = (req, res) => {
 module.exports = {
     create,
     getByCode,
-    getById
+    getById,
+    getByIdAndIncPlayers,
+    getByIdAndDecPlayers
 }

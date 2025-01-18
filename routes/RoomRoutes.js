@@ -7,5 +7,7 @@ const check = require("../authorization/auth");
 router.post("/create", check.auth, RoomController.create);
 router.get("/getByCode", check.auth, RoomController.getByCode);
 router.get("/getById", RoomController.getById);
+router.get("/getByIdAndIncPlayers", RoomController.getByIdAndIncPlayers);
+router.get("/getByIdAndDecPlayers", RoomController.getByIdAndDecPlayers);
 
 module.exports = router;

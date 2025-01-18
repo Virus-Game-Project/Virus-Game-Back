@@ -7,6 +7,10 @@ const RoomSchema = Schema({
     admin: {
         type: Schema.ObjectId,
         ref: "User"
+    },
+    playersQuantity: {
+        type: Number,
+        default: 0
     }
 });
 
