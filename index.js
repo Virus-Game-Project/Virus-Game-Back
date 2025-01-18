@@ -17,6 +17,8 @@ app.use(express.json());
 
 const UserRoutes = require("./routes/UserRoutes");
 app.use("/api/users", UserRoutes);
+const RoomRoutes = require("./routes/RoomRoutes");
+app.use("/api/rooms", RoomRoutes);
 
 app.get("/test-route", (_req, res) => {
     return res.status(200).json({
