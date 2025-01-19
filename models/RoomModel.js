@@ -15,6 +15,10 @@ const RoomSchema = Schema({
     status: {
         type: String,
         default: "waiting"
+    },
+    currentTurn: {
+        type: Number,
+        default: 0
     }
 });
 
