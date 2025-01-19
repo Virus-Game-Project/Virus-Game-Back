@@ -22,13 +22,17 @@ app.use("/api/rooms", RoomRoutes);
 
 app.get("/test-route", (_req, res) => {
     return res.status(200).json({
-        "version": "0.0.0"
+        "version": "0.0.1"
     });
 });
 
 const server = http.createServer(app);
 const io = socketIo(server, {
-    cors: {}
+    cors: {
+      origin: ['https://virus-card-game.web.app', 'http://localhost:4200'],
+      methods: ['GET', 'POST'],
+      credentials: true,
+    },
 });
 
 const requests = require('./socket-requests/requests');
