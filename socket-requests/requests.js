@@ -1,5 +1,7 @@
 const Room = require("../models/RoomModel");
 
+const activeGames = {};
+
 module.exports = (io) => {
     io.on('connection', (socket) => {
         let currentRoomId = null;

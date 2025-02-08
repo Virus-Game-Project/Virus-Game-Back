@@ -74,7 +74,7 @@ const getByCode = (req, res) => {
 const getById = (req, res) => {
     let roomId = req.query.id;
 
-    Room.findById(roomId).then(room => {
+    Room.findById(roomId).populate('players').then(room => {
         if (!room) {
             return res.status(404).json({
                 "status": "error",
@@ -97,7 +97,7 @@ const getByIdAndIncPlayers = (req, res) => {
     let roomId = req.query.id;
     let userId = req.user.id;
 
-    Room.findByIdAndUpdate({ _id: roomId }, { $addToSet: { players: userId } }, { new: true }).then(room => {
+    Room.findByIdAndUpdate({ _id: roomId }, { $addToSet: { players: userId } }, { new: true }).populate('players').then(room => {
         if (!room) {
             return res.status(404).json({
                 "message": "No existe sala con ese código"
