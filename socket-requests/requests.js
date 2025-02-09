@@ -1,5 +1,12 @@
 const Room = require("../models/RoomModel");
+const _ = require('lodash');
 
+const cardsMaster = [
+    'OM1', 'OR1', 'OR2', 'OR3', 'OR4', 'OR5', 'OG1', 'OG2', 'OG3', 'OG4', 'OG5', 'OB1', 'OB2', 'OB3', 'OB4', 'OB5', 'OY1', 'OY2', 'OY3', 'OY4', 'OY5',
+    'VM1', 'VR1', 'VR2', 'VR3', 'VR4', 'VG1', 'VG2', 'VG3', 'VG4', 'VB1', 'VB2', 'VB3', 'VB4', 'VY1', 'VY2', 'VY3', 'VY4',
+    'TM1', 'TM2', 'TM3', 'TM4', 'TR1', 'TR2', 'TR3', 'TR4', 'TG1', 'TG2', 'TG3', 'TG4', 'TB1', 'TB2', 'TB3', 'TB4', 'TY1', 'TY2', 'TY3', 'TY4',
+    'EC1', 'EC2', 'ER1', 'ER2', 'ER3', 'ET1', 'ET2', 'ET3', 'EG1', 'EE1'
+];
 const activeGames = {};
 
 module.exports = (io) => {
@@ -25,18 +32,31 @@ module.exports = (io) => {
             }
         });
 
-        socket.on('startGame', async (roomId) => {
+        socket.on('startGame', (roomData) => {
+            let cards = _.shuffle(cardsMaster);
+            activeGames[roomData.roomId] = {
+                deck: cards,
+                discardPile: [],
+                playerHands: roomData.players.reduce((acc, player) => {
+                    acc[player._id] = cards.splice(0, 3);
+                    return acc;
+                }, {})
+            };
             gameStarted = true;
-            socket.to(roomId).emit('gameStarted');
-            io.to(roomId).emit('updateTurn', 0);
+            socket.to(roomData.roomId).emit('gameStarted');
+            io.to(roomData.roomId).emit('updateTurn', { turn: 0, game: activeGames[roomData.roomId] });
         });
 
         socket.on('gameStartedForAllPlayers', () => {
             gameStarted = true;
         });
 
+        socket.on('getGameInfo', () => {
+            socket.emit('gameInfoResponse', activeGames[currentRoomId]);
+        });
+
         socket.on('endTurn', (gameInfo) => {
-            io.to(gameInfo.roomId).emit('updateTurn', gameInfo.turn);
+            io.to(gameInfo.roomId).emit('updateTurn', { turn: gameInfo.turn, game: activeGames[gameInfo.roomId] });
         });
     });
 }
