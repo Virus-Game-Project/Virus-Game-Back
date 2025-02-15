@@ -42,21 +42,33 @@ module.exports = (io) => {
                     return acc;
                 }, {})
             };
-            gameStarted = true;
-            socket.to(roomData.roomId).emit('gameStarted');
-            io.to(roomData.roomId).emit('updateTurn', { turn: 0, game: activeGames[roomData.roomId] });
+            io.to(roomData.roomId).emit('gameStarted');
+            io.to(roomData.roomId).emit('updateTurn', 0);
         });
 
-        socket.on('gameStartedForAllPlayers', () => {
-            gameStarted = true;
-        });
-
-        socket.on('getGameInfo', () => {
+        socket.on('getGameInfo', async () => {
+            let room = await Room.findById(currentRoomId);
+            gameStarted = room.status === 'started';
             socket.emit('gameInfoResponse', activeGames[currentRoomId]);
         });
 
+        socket.on('playerAction', (data) => {
+            let game = activeGames[data.roomId];
+
+            if (game) {
+                game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== card);
+
+                if (data.action === 'use') {
+
+                } else if (data.action === 'discard') {
+                    game.discardPile.push(card);
+                }
+                io.to(data.roomId).emit('updateGameState', game);
+            }
+        });
+
         socket.on('endTurn', (gameInfo) => {
-            io.to(gameInfo.roomId).emit('updateTurn', { turn: gameInfo.turn, game: activeGames[gameInfo.roomId] });
+            io.to(gameInfo.roomId).emit('updateTurn', gameInfo.turn);
         });
     });
 }
