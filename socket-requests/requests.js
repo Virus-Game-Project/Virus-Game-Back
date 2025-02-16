@@ -14,7 +14,6 @@ module.exports = (io) => {
         let currentRoomId = null;
         let currentUserId = null;
         let gameStarted = null;
-        let bodyCodes = [];
 
         socket.on('joinRoom', async (roomData) => {
             currentRoomId = roomData.roomId;
@@ -80,11 +79,11 @@ module.exports = (io) => {
                 if (data.action === 'use') {
                     if (data.card.slice(0, 1) == 'O') {
                         let verifyCard = data.card.slice(0, 2);
-                        let cardInBody = bodyCodes.find(code => code == verifyCard);
+                        let cardInBody = game.playersBody[data.userId].some(slot => 
+                            slot.length > 0 && slot[0].slice(0, 2) === verifyCard
+                        );
                         if (!cardInBody) {
                             game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
-                            bodyCodes.push(verifyCard);
-
                             let firstEmptySlotIndex = game.playersBody[data.userId].findIndex(slot => slot.length === 0);
                             if (firstEmptySlotIndex !== -1) {
                                 game.playersBody[data.userId][firstEmptySlotIndex].push(data.card);
@@ -93,6 +92,65 @@ module.exports = (io) => {
                             game.turnState.hasPlayed = true;
                         } else {
                             socket.emit('error', { message: 'No puedes usar una tarjeta que ya está en tu cuerpo' });
+                        }
+                    } else if (data.card.slice(0, 1) == 'V') {
+                        let organCard = game.playersBody[data.targetPlayer][data.slot][0];
+                        if (organCard.slice(1, 2) == data.card.slice(1, 2)) {
+                            if (game.playersBody[data.targetPlayer][data.slot].length == 1) {
+                                game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
+                                game.playersBody[data.targetPlayer][data.slot].push(data.card);
+                                game.turnState.hasPlayedAction = true;
+                                game.turnState.hasPlayed = true;
+                            } else if (game.playersBody[data.targetPlayer][data.slot].length == 2) {
+                                game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
+                                let slot = game.playersBody[data.targetPlayer][data.slot];
+                                let topCard = slot[slot.length - 1];
+                                let typeCard = topCard.slice(0, 1);
+                                if (typeCard == 'V') {
+                                    game.playersBody[data.targetPlayer][data.slot].push(data.card);
+                                    const targetBody = game.playersBody[data.targetPlayer][data.slot];
+                                    game.discardPile.unshift(...targetBody);
+                                    game.playersBody[data.targetPlayer][data.slot] = [];
+                                } else {
+                                    game.discardPile.unshift(data.card);
+                                    game.discardPile.unshift(topCard);
+                                    game.playersBody[data.targetPlayer][data.slot].pop();
+                                }
+                                game.turnState.hasPlayedAction = true;
+                                game.turnState.hasPlayed = true;
+                            } else if (game.playersBody[data.targetPlayer][data.slot].length == 3) {
+                                socket.emit('error', { message: 'No puedes afectar un organo inmunizado' });
+                            }
+                        } else {
+                            socket.emit('error', { message: 'No puedes afectar un organo de otro color' });
+                        }
+                    } else if (data.card.slice(0, 1) == 'T') {
+                        let organCard = game.playersBody[data.userId][data.slot][0];
+                        if (organCard.slice(1, 2) == data.card.slice(1, 2)) {
+                            if (game.playersBody[data.userId][data.slot].length == 1) {
+                                game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
+                                game.playersBody[data.userId][data.slot].push(data.card);
+                                game.turnState.hasPlayedAction = true;
+                                game.turnState.hasPlayed = true;
+                            } else if (game.playersBody[data.userId][data.slot].length == 2) {
+                                game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
+                                let slot = game.playersBody[data.userId][data.slot];
+                                let topCard = slot[slot.length - 1];
+                                let typeCard = topCard.slice(0, 1);
+                                if (typeCard == 'T') {
+                                    game.playersBody[data.userId][data.slot].push(data.card);
+                                } else {
+                                    game.discardPile.unshift(data.card);
+                                    game.discardPile.unshift(topCard);
+                                    game.playersBody[data.userId][data.slot].pop();
+                                }
+                                game.turnState.hasPlayedAction = true;
+                                game.turnState.hasPlayed = true;
+                            } else if (game.playersBody[data.userId][data.slot].length == 3) {
+                                socket.emit('error', { message: 'No puedes tratar a un organo ya inmunizado' });
+                            }
+                        } else {
+                            socket.emit('error', { message: 'No puedes curar un organo de otro color' });
                         }
                     }
                 } else if (data.action === 'discard') {
@@ -119,6 +177,13 @@ module.exports = (io) => {
                 }
 
                 while (game.playerHands[data.userId].length < 3) {
+                    if (game.deck.length == 1) {
+                        let lastCardDiscard = game.discardPile.shift();
+                        game.deck.push(...game.discardPile);
+                        game.discardPile = [lastCardDiscard];
+                
+                        game.deck = _.shuffle(game.deck);
+                    }
                     game.playerHands[data.userId].push(game.deck.shift());
                 }
 
@@ -138,6 +203,21 @@ module.exports = (io) => {
                 for (const playerId in game.playersBody) {
                     const filledSlots = game.playersBody[playerId].filter(slot => slot.length > 0).length;
                     if (filledSlots >= 4) {
+                        let slots = game.playersBody[playerId].filter(slot => slot.length > 0);
+                        let contador = 0;
+
+                        slots.forEach(slot => {
+                            if (slot.length == 1 || slot.length == 3) {
+                                contador++;
+                            } else {
+                                let lastCard = slot[1];
+
+                                if (lastCard.slice(0, 1) == 'T') {
+                                    contador++;
+                                }
+                            }
+                        });
+
                         game.winner = playerId;
                         io.to(gameInfo.roomId).emit('winner', playerId);
                     }

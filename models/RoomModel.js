@@ -19,6 +19,10 @@ const RoomSchema = Schema({
     currentTurn: {
         type: Number,
         default: 0
+    },
+    winner: {
+        type: Schema.ObjectId,
+        ref: "User"
     }
 });
 
