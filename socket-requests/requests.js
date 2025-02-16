@@ -14,6 +14,7 @@ module.exports = (io) => {
         let currentRoomId = null;
         let currentUserId = null;
         let gameStarted = null;
+        let bodyCodes = [];
 
         socket.on('joinRoom', async (roomData) => {
             currentRoomId = roomData.roomId;
@@ -40,7 +41,17 @@ module.exports = (io) => {
                 playerHands: roomData.players.reduce((acc, player) => {
                     acc[player._id] = cards.splice(0, 3);
                     return acc;
-                }, {})
+                }, {}),
+                playersBody: roomData.players.reduce((acc, player) => {
+                    acc[player._id] = Array.from({ length: 5 }, () => []);
+                    return acc;
+                }, {}),
+                turnState: {
+                    hasPlayed: false,
+                    hasPlayedAction: false,
+                    hasDrawn: false
+                },
+                winner: null
             };
             io.to(roomData.roomId).emit('gameStarted');
             io.to(roomData.roomId).emit('updateTurn', 0);
@@ -56,19 +67,84 @@ module.exports = (io) => {
             let game = activeGames[data.roomId];
 
             if (game) {
-                game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== card);
+                if (game.turnState.hasPlayed && (data.action === 'use' || game.turnState.hasPlayedAction)) {
+                    socket.emit('error', { message: 'Ya jugaste una carta este turno' });
+                    return;
+                }
+
+                if (game.turnState.hasDrawn) {
+                    socket.emit('error', { message: 'Ya robaste cartas en este turno' });
+                    return;
+                }
 
                 if (data.action === 'use') {
+                    if (data.card.slice(0, 1) == 'O') {
+                        let verifyCard = data.card.slice(0, 2);
+                        let cardInBody = bodyCodes.find(code => code == verifyCard);
+                        if (!cardInBody) {
+                            game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
+                            bodyCodes.push(verifyCard);
 
+                            let firstEmptySlotIndex = game.playersBody[data.userId].findIndex(slot => slot.length === 0);
+                            if (firstEmptySlotIndex !== -1) {
+                                game.playersBody[data.userId][firstEmptySlotIndex].push(data.card);
+                            }
+                            game.turnState.hasPlayedAction = true;
+                            game.turnState.hasPlayed = true;
+                        } else {
+                            socket.emit('error', { message: 'No puedes usar una tarjeta que ya está en tu cuerpo' });
+                        }
+                    }
                 } else if (data.action === 'discard') {
-                    game.discardPile.push(card);
+                    game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
+                    game.discardPile.unshift(data.card);
+                    game.turnState.hasPlayed = true;
                 }
-                io.to(data.roomId).emit('updateGameState', game);
+                io.to(data.roomId).emit('gameInfoResponse', activeGames[currentRoomId]);
+            }
+        });
+
+        socket.on('getCard', (data) => {
+            let game = activeGames[data.roomId];
+
+            if (game) {
+                if (!game.turnState.hasPlayed) {
+                    socket.emit('error', { message: 'Debes jugar o descartar antes de robar' });
+                    return;
+                }
+
+                if (game.turnState.hasDrawn) {
+                    socket.emit('error', { message: 'Ya robaste cartas en este turno' });
+                    return;
+                }
+
+                while (game.playerHands[data.userId].length < 3) {
+                    game.playerHands[data.userId].push(game.deck.shift());
+                }
+
+                game.turnState.hasDrawn = true;
+                io.to(data.roomId).emit('gameInfoResponse', activeGames[currentRoomId]);
             }
         });
 
         socket.on('endTurn', (gameInfo) => {
-            io.to(gameInfo.roomId).emit('updateTurn', gameInfo.turn);
+            let game = activeGames[gameInfo.roomId];
+
+            if (game) {
+                game.turnState.hasPlayed = false;
+                game.turnState.hasPlayedAction = false;
+                game.turnState.hasDrawn = false;
+
+                for (const playerId in game.playersBody) {
+                    const filledSlots = game.playersBody[playerId].filter(slot => slot.length > 0).length;
+                    if (filledSlots >= 4) {
+                        game.winner = playerId;
+                        io.to(gameInfo.roomId).emit('winner', playerId);
+                    }
+                }
+    
+                io.to(gameInfo.roomId).emit('updateTurn', gameInfo.turn);
+            }
         });
     });
 }
