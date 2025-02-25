@@ -7,12 +7,6 @@ const cardsMaster = [
     'TM1', 'TM2', 'TM3', 'TM4', 'TR1', 'TR2', 'TR3', 'TR4', 'TG1', 'TG2', 'TG3', 'TG4', 'TB1', 'TB2', 'TB3', 'TB4', 'TY1', 'TY2', 'TY3', 'TY4',
     'ER1', 'ER2', 'ER3', 'ET1', 'ET2', 'ET3', 'EG1', 'EE1'
 ];
-/*const cardsMaster = [
-    'OM1', 'OR1', 'OR2', 'OR3', 'OR4', 'OR5', 'OG1', 'OG2', 'OG3', 'OG4', 'OG5', 'OB1', 'OB2', 'OB3', 'OB4', 'OB5', 'OY1', 'OY2', 'OY3', 'OY4', 'OY5',
-    'VM1', 'VR1', 'VR2', 'VR3', 'VR4', 'VG1', 'VG2', 'VG3', 'VG4', 'VB1', 'VB2', 'VB3', 'VB4', 'VY1', 'VY2', 'VY3', 'VY4',
-    'TM1', 'TM2', 'TM3', 'TM4', 'TR1', 'TR2', 'TR3', 'TR4', 'TG1', 'TG2', 'TG3', 'TG4', 'TB1', 'TB2', 'TB3', 'TB4', 'TY1', 'TY2', 'TY3', 'TY4',
-    'ER1', 'ER2', 'ER3', 'ET1', 'ET2', 'ET3', 'EG1', 'EE1'
-];*/
 const activeGames = {};
 
 module.exports = (io) => {
@@ -220,17 +214,16 @@ module.exports = (io) => {
                                     const userCards = game.playerHands[userId];
                                     game.discardPile.unshift(...userCards);
                                     game.playerHands[userId] = [];
-
-                                    while (game.playerHands[userId].length < 3) {
-                                        if (game.deck.length == 1) {
-                                            let lastCardDiscard = game.discardPile.shift();
-                                            game.deck.push(...game.discardPile);
-                                            game.discardPile = [lastCardDiscard];
-                                    
-                                            game.deck = _.shuffle(game.deck);
-                                        }
-                                        game.playerHands[userId].push(game.deck.shift());
+                                }
+                                while (game.playerHands[userId].length < 3) {
+                                    if (game.deck.length == 1) {
+                                        let lastCardDiscard = game.discardPile.shift();
+                                        game.deck.push(...game.discardPile);
+                                        game.discardPile = [lastCardDiscard];
+                                
+                                        game.deck = _.shuffle(game.deck);
                                     }
+                                    game.playerHands[userId].push(game.deck.shift());
                                 }
                             });
                         } else if (data.card.slice(1, 2) == 'E') {
