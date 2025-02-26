@@ -89,6 +89,7 @@ module.exports = (io) => {
                             }
                             game.turnState.hasPlayedAction = true;
                             game.turnState.hasPlayed = true;
+                            io.to(data.roomId).emit('eventGame', { type: '2', author: data.userId, message: 'ha colocado en su tablero un', card: data.card.slice(0, 2) });
                         } else {
                             socket.emit('error', { message: 'No puedes usar una tarjeta que ya está en tu cuerpo' });
                         }
@@ -100,6 +101,7 @@ module.exports = (io) => {
                                 game.playersBody[data.targetPlayer][data.slot].push(data.card);
                                 game.turnState.hasPlayedAction = true;
                                 game.turnState.hasPlayed = true;
+                                io.to(data.roomId).emit('eventGame', { type: '3', author: data.userId, message: 'ha infectado el', card: organCard.slice(0, 2), target: data.targetPlayer });
                             } else if (game.playersBody[data.targetPlayer][data.slot].length == 2) {
                                 game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
                                 let slot = game.playersBody[data.targetPlayer][data.slot];
@@ -110,10 +112,12 @@ module.exports = (io) => {
                                     const targetBody = game.playersBody[data.targetPlayer][data.slot];
                                     game.discardPile.unshift(...targetBody);
                                     game.playersBody[data.targetPlayer][data.slot] = [];
+                                    io.to(data.roomId).emit('eventGame', { type: '3', author: data.userId, message: 'ha eliminado el', card: organCard.slice(0, 2), target: data.targetPlayer });
                                 } else {
                                     game.discardPile.unshift(data.card);
                                     game.discardPile.unshift(topCard);
                                     game.playersBody[data.targetPlayer][data.slot].pop();
+                                    io.to(data.roomId).emit('eventGame', { type: '3', author: data.userId, message: 'ha quitado la cura del', card: organCard.slice(0, 2), target: data.targetPlayer });
                                 }
                                 game.turnState.hasPlayedAction = true;
                                 game.turnState.hasPlayed = true;
@@ -131,6 +135,7 @@ module.exports = (io) => {
                                 game.playersBody[data.userId][data.slot].push(data.card);
                                 game.turnState.hasPlayedAction = true;
                                 game.turnState.hasPlayed = true;
+                                io.to(data.roomId).emit('eventGame', { type: '2', author: data.userId, message: 'ha curado su', card: organCard.slice(1, 2) });
                             } else if (game.playersBody[data.userId][data.slot].length == 2) {
                                 game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
                                 let slot = game.playersBody[data.userId][data.slot];
@@ -138,10 +143,12 @@ module.exports = (io) => {
                                 let typeCard = topCard.slice(0, 1);
                                 if (typeCard == 'T') {
                                     game.playersBody[data.userId][data.slot].push(data.card);
+                                    io.to(data.roomId).emit('eventGame', { type: '2', author: data.userId, message: 'ha inmunizado su', card: organCard.slice(0, 2) });
                                 } else {
                                     game.discardPile.unshift(data.card);
                                     game.discardPile.unshift(topCard);
                                     game.playersBody[data.userId][data.slot].pop();
+                                    io.to(data.roomId).emit('eventGame', { type: '2', author: data.userId, message: 'ha quitado la infección de su', card: organCard.slice(0, 2) });
                                 }
                                 game.turnState.hasPlayedAction = true;
                                 game.turnState.hasPlayed = true;
@@ -172,6 +179,7 @@ module.exports = (io) => {
                                     }
                                     game.turnState.hasPlayedAction = true;
                                     game.turnState.hasPlayed = true;
+                                    io.to(data.roomId).emit('eventGame', { type: '3', author: data.userId, message: 'ha robado el', card: verifyCard, target: data.targetPlayer });
                                 } else {
                                     socket.emit('error', { message: 'No puedes robar un organo que ya está en tu cuerpo' });
                                 }
@@ -202,6 +210,7 @@ module.exports = (io) => {
                                     game.playersBody[data.targetPlayer][data.slotFrom] = slotTo;
                                     game.turnState.hasPlayedAction = true;
                                     game.turnState.hasPlayed = true;
+                                    io.to(data.roomId).emit('eventGame', { type: '4', author: data.userId, card: verifyCardTo, cardTarget: verifyCardFrom, target: data.targetPlayer });
                                 } else {
                                     socket.emit('error', { message: 'No puedes transplantar un organo que ya está en en el cuerpo' });
                                 }
@@ -226,6 +235,7 @@ module.exports = (io) => {
                                     game.playerHands[userId].push(game.deck.shift());
                                 }
                             });
+                            io.to(data.roomId).emit('eventGame', { type: '1', author: data.userId, message: 'ha usado guante de latex y juega de nuevo' });
                         } else if (data.card.slice(1, 2) == 'E') {
                             let isBodyUserEmpty = game.playersBody[data.userId].every(slot => slot.length === 0);
                             let isBodyTargetEmpty = game.playersBody[data.targetPlayer].every(slot => slot.length === 0);
@@ -241,6 +251,7 @@ module.exports = (io) => {
 
                                 game.turnState.hasPlayedAction = true;
                                 game.turnState.hasPlayed = true;
+                                io.to(data.roomId).emit('eventGame', { type: '5', author: data.userId, target: data.targetPlayer });
                             }
                         }
                     }
@@ -248,6 +259,7 @@ module.exports = (io) => {
                     game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
                     game.discardPile.unshift(data.card);
                     game.turnState.hasPlayed = true;
+                    io.to(data.roomId).emit('eventGame', { type: '1', author: data.userId, message: 'ha descartado una carta' });
                 }
                 io.to(data.roomId).emit('gameInfoResponse', activeGames[currentRoomId]);
             }
@@ -279,6 +291,7 @@ module.exports = (io) => {
                 }
 
                 game.turnState.hasDrawn = true;
+                io.to(data.roomId).emit('eventGame', { type: '1', author: data.userId, message: 'ha robado una carta del mazo' });
                 io.to(data.roomId).emit('gameInfoResponse', activeGames[currentRoomId]);
             }
         });
@@ -312,7 +325,7 @@ module.exports = (io) => {
                         }
                     }
                 }
-    
+
                 io.to(gameInfo.roomId).emit('updateTurn', gameInfo.turn);
             }
         });

@@ -22,7 +22,7 @@ app.use("/api/rooms", RoomRoutes);
 
 app.get("/test-route", (_req, res) => {
     return res.status(200).json({
-        "version": "1.0.0"
+        "version": "1.1.0"
     });
 });
 
