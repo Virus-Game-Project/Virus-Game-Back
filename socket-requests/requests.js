@@ -291,7 +291,6 @@ module.exports = (io) => {
                 }
 
                 game.turnState.hasDrawn = true;
-                io.to(data.roomId).emit('eventGame', { type: '1', author: data.userId, message: 'ha robado una carta del mazo' });
                 io.to(data.roomId).emit('gameInfoResponse', activeGames[currentRoomId]);
             }
         });
