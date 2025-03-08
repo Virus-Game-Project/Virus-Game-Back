@@ -135,7 +135,7 @@ module.exports = (io) => {
                                 game.playersBody[data.userId][data.slot].push(data.card);
                                 game.turnState.hasPlayedAction = true;
                                 game.turnState.hasPlayed = true;
-                                io.to(data.roomId).emit('eventGame', { type: '2', author: data.userId, message: 'ha curado su', card: organCard.slice(1, 2) });
+                                io.to(data.roomId).emit('eventGame', { type: '2', author: data.userId, message: 'ha curado su', card: organCard.slice(0, 2) });
                             } else if (game.playersBody[data.userId][data.slot].length == 2) {
                                 game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
                                 let slot = game.playersBody[data.userId][data.slot];
