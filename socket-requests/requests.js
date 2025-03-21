@@ -95,7 +95,14 @@ module.exports = (io) => {
                         }
                     } else if (data.card.slice(0, 1) == 'V') {
                         let organCard = game.playersBody[data.targetPlayer][data.slot][0];
-                        if ((organCard.slice(1, 2) == data.card.slice(1, 2)) || data.card.slice(1, 2) == 'M' || organCard.slice(1, 2) == 'M') {
+                        let middleCardMulticolor = false;
+                        if (game.playersBody[data.targetPlayer][data.slot].length == 2) {
+                            let topCard = game.playersBody[data.targetPlayer][data.slot][1];
+                            if (topCard.slice(0, 1) == 'T' && topCard.slice(1, 2) == 'M') {
+                                middleCardMulticolor = true;
+                            }
+                        }
+                        if ((organCard.slice(1, 2) == data.card.slice(1, 2)) || data.card.slice(1, 2) == 'M' || organCard.slice(1, 2) == 'M' || middleCardMulticolor) {
                             if (game.playersBody[data.targetPlayer][data.slot].length == 1) {
                                 game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
                                 game.playersBody[data.targetPlayer][data.slot].push(data.card);
@@ -129,7 +136,14 @@ module.exports = (io) => {
                         }
                     } else if (data.card.slice(0, 1) == 'T') {
                         let organCard = game.playersBody[data.userId][data.slot][0];
-                        if ((organCard.slice(1, 2) == data.card.slice(1, 2)) || data.card.slice(1, 2) == 'M' || organCard.slice(1, 2) == 'M') {
+                        let middleCardMulticolor = false;
+                        if (game.playersBody[data.userId][data.slot].length == 2) {
+                            let topCard = game.playersBody[data.userId][data.slot][1];
+                            if (topCard.slice(0, 1) == 'V' && topCard.slice(1, 2) == 'M') {
+                                middleCardMulticolor = true;
+                            }
+                        }
+                        if ((organCard.slice(1, 2) == data.card.slice(1, 2)) || data.card.slice(1, 2) == 'M' || organCard.slice(1, 2) == 'M' || middleCardMulticolor) {
                             if (game.playersBody[data.userId][data.slot].length == 1) {
                                 game.playerHands[data.userId] = game.playerHands[data.userId].filter(c => c !== data.card);
                                 game.playersBody[data.userId][data.slot].push(data.card);
